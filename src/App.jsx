@@ -7,7 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const ASSETS = '/models/'
+const ASSETS = './models/'
 const clamp01 = (n) => Math.max(0, Math.min(1, n))
 const smooth = (a, b, x) => {
   const t = clamp01((x - a) / (b - a))
@@ -133,7 +133,7 @@ function Critter({ type = 'leaf', position }) {
   const fire = type === 'ember'
   return (
     <group ref={root} position={position}>
-      <mesh castShadow position={[0, 0.42, 0]} scale={[0.62, 0.5, 0.48]}><sphereGeometry args={[0.52, 10, 8]} /><meshStandardMaterial color={leaf ? '#7da76a' : fire ? '#c87a47' : '#dbbf58'} roughness={0.8} /></mesh>
+      <mesh castShadow position={[0, 0.42, 0]} scale={[0.62, 0.5, 0.48]}><sphereGeometry args={[0.52, 10, 8]} /><meshStandardMaterial color={leaf ? '#7da76a' : fire ? '#c87a47' : '#dbbf58'} roughness={0.75} /></mesh>
       <mesh castShadow position={[0, 0.82, 0.01]}><sphereGeometry args={[0.28, 9, 7]} /><meshStandardMaterial color={leaf ? '#9fc98a' : fire ? '#dd9c5e' : '#e9d77e'} roughness={0.75} /></mesh>
       {leaf ? <group>
         <mesh castShadow position={[-0.09, 1.19, 0]} rotation={[0, 0, 0.48]}><coneGeometry args={[0.16, 0.42, 5]} /><meshStandardMaterial color="#548b4d" /></mesh>
@@ -158,7 +158,7 @@ function NoticeBoard() {
       {[-2.12, 2.12].map((x) => <mesh key={x} castShadow position={[x, 0, 0.22]}><boxGeometry args={[0.14, 3.02, 0.1]} /><meshStandardMaterial color="#6e4828" roughness={0.85} /></mesh>)}
       {[-1.38, -0.46, 0.46, 1.38].map((x, i) => <group key={x} position={[x, i % 2 ? 0.04 : -0.06, 0.22]} rotation={[0, 0, (i % 2 ? -1 : 1) * 0.035]}>
         <mesh castShadow><boxGeometry args={[0.77, 1.3, 0.035]} /><meshStandardMaterial color={['#e4cf9e', '#d9c08c', '#ead6a8', '#d5ba83'][i]} roughness={1} /></mesh>
-        {[-0.34, -0.15, 0.04, 0.23].map((y, j) => <mesh key={y} position={[0, y, 0.023]}><boxGeometry args={[0.46 - j * 0.055, 0.018, 0.008]} /><meshBasicMaterial color="#806544" transparent opacity={0.5} /></mesh>)}
+        {[-0.34, -0.15, 0.04, 0.23].map((y, j) => <mesh key={y} position={[0, y, 0.023]}><boxGeometry args={[0.46 - j * 0.055, 0.018, 0.008]} /><meshBasicMaterial color="#806544" transparent opacity={0.6} /></mesh>)}
         <mesh position={[0.23, 0.5, 0.035]}><circleGeometry args={[0.045, 8]} /><meshStandardMaterial color="#9d3f2a" metalness={0.18} roughness={0.6} /></mesh>
       </group>)}
       {[-2.25, 2.25].map((x) => <mesh key={x} castShadow position={[x, -2.05, 0.02]}><cylinderGeometry args={[0.075, 0.11, 2.4, 6]} /><meshStandardMaterial color="#53351f" /></mesh>)}
@@ -290,14 +290,14 @@ function WorldHeadline({ progress }) {
 }
 
 function LoadingCard() {
-  return <div className="loading"><div className="loading-sigil">✧</div><div className="loading-title">Opening the realm</div><div className="loading-track"><span /></div><div className="loading-sub">Gathering legends, lanterns and lore</div></div>
+  return <div className="loading"><div className="loading-sigil">✧</div><div className="loading-title">Opening the realm</div><div className="loading-track"><span /></div><div className="loading-sub">Please wait</div></div>
 }
 
 const notices = [
-  { id: 'about', stamp: 'THE CHRONICLER', title: 'Meet your DM', mark: '✦', body: 'I build adventures around meaningful choices, strange worlds, memorable characters, and the stories that emerge at the table. This notice is where your introduction, DM style, and experience can live.' },
-  { id: 'campaigns', stamp: 'OPEN CONTRACTS', title: 'Campaigns', mark: '⚔', body: 'Cargo Status Lost — an otherworldly fantasy adventure full of secrets and dangerous bargains. Pokémon Grand Journey — a creature-training adventure across a region of towns, trials, and discoveries. Replace or expand these entries to match your current listings.' },
-  { id: 'lore', stamp: 'THE ARCHIVES', title: 'World archives', mark: '⌘', body: 'Explore setting notes, maps, factions, important NPCs, mysteries, and discoveries from the adventures. This section can grow into a proper campaign wiki.' },
-  { id: 'guild', stamp: 'JOIN THE GUILD', title: 'Find an adventure', mark: '➶', body: 'Add your StartPlaying listings, Discord invite, booking page, or contact links here. The prototype keeps these as editable content until you provide the final URLs.' },
+  { id: 'about', stamp: 'THE CHRONICLER', title: 'Meet your DM', mark: '✦', body: 'I build adventures around meaningful choices, strange worlds, memorable characters, and the stories that emerge from them.' },
+  { id: 'campaigns', stamp: 'OPEN CONTRACTS', title: 'Campaigns', mark: '⚔', body: 'Cargo Status Lost — an otherworldly fantasy adventure full of secrets and dangerous bargains.' },
+  { id: 'lore', stamp: 'THE ARCHIVES', title: 'World archives', mark: '⌘', body: 'Explore setting notes, maps, factions, important NPCs, mysteries, and discoveries from the adventures.' },
+  { id: 'guild', stamp: 'JOIN THE GUILD', title: 'Find an adventure', mark: '➶', body: 'Add your StartPlaying listings, Discord invite, booking page, or contact links here.' },
 ]
 
 function App() {
@@ -345,7 +345,7 @@ function App() {
 
       <header className="topbar">
         <a className="brand" href="#top" aria-label="The Realm home"><span className="brand-mark">✧</span><span><b>THE REALM</b><small>A DUNGEON MASTER'S WORLD</small></span></a>
-        <div className="topbar-right"><span className="chapter-pill"><i /> {stage}</span><button className="sound-button" onClick={() => setMuted(!muted)} aria-label="Toggle ambient audio" title="Audio placeholder">{muted ? 'SOUND OFF' : 'SOUND ON'}</button></div>
+        <div className="topbar-right"><span className="chapter-pill"><i /> {stage}</span><button className="sound-button" onClick={() => setMuted(!muted)} aria-label="Toggle ambient audio" title="Toggle ambient audio">🔊</button></div>
       </header>
 
       <main id="top">
@@ -387,7 +387,7 @@ function App() {
           </div>
           <div className="notice-grid">
             {notices.map((notice, index) => <button className={`notice-card reveal notice-${index + 1}`} key={notice.id} onClick={() => setSelected(notice.id)}>
-              <span className="paper-stamp">{notice.stamp}</span><span className="paper-mark">{notice.mark}</span><b>{notice.title}</b><span className="paper-rule" /><span className="read-note">READ NOTICE <span>↗</span></span>
+              <span className="paper-stamp">{notice.stamp}</span><span className="paper-mark">{notice.mark}</span><b>{notice.title}</b><span className="paper-rule" /><span className="read-note">READ</span>
             </button>)}
           </div>
           <footer className="site-footer"><span>MADE FOR ADVENTURERS & STORYTELLERS</span><span>THE REALM AWAITS · <a href="#top">RETURN TO THE GATE ↑</a></span></footer>
