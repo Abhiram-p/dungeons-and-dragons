@@ -4,6 +4,9 @@ import { Sparkles, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import CampaignDirectory from './components/CampaignDirectory.jsx'
+import DmDashboard from './components/DmDashboard.jsx'
+import { APPLICATIONS_STORAGE_KEY, CAMPAIGNS_STORAGE_KEY, createId, initialCampaigns, readDemoStorage, saveDemoStorage } from './data/demoData.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -133,7 +136,7 @@ function Critter({ type = 'leaf', position }) {
   const fire = type === 'ember'
   return (
     <group ref={root} position={position}>
-      <mesh castShadow position={[0, 0.42, 0]} scale={[0.62, 0.5, 0.48]}><sphereGeometry args={[0.52, 10, 8]} /><meshStandardMaterial color={leaf ? '#7da76a' : fire ? '#c87a47' : '#dbbf58'} roughness={0.75} /></mesh>
+      <mesh castShadow position={[0, 0.42, 0]} scale={[0.62, 0.5, 0.48]}><sphereGeometry args={[0.52, 10, 8]} /><meshStandardMaterial color={leaf ? '#7da76a' : fire ? '#c87a47' : '#dbbf58'} roughness={0.8} /></mesh>
       <mesh castShadow position={[0, 0.82, 0.01]}><sphereGeometry args={[0.28, 9, 7]} /><meshStandardMaterial color={leaf ? '#9fc98a' : fire ? '#dd9c5e' : '#e9d77e'} roughness={0.75} /></mesh>
       {leaf ? <group>
         <mesh castShadow position={[-0.09, 1.19, 0]} rotation={[0, 0, 0.48]}><coneGeometry args={[0.16, 0.42, 5]} /><meshStandardMaterial color="#548b4d" /></mesh>
@@ -158,7 +161,7 @@ function NoticeBoard() {
       {[-2.12, 2.12].map((x) => <mesh key={x} castShadow position={[x, 0, 0.22]}><boxGeometry args={[0.14, 3.02, 0.1]} /><meshStandardMaterial color="#6e4828" roughness={0.85} /></mesh>)}
       {[-1.38, -0.46, 0.46, 1.38].map((x, i) => <group key={x} position={[x, i % 2 ? 0.04 : -0.06, 0.22]} rotation={[0, 0, (i % 2 ? -1 : 1) * 0.035]}>
         <mesh castShadow><boxGeometry args={[0.77, 1.3, 0.035]} /><meshStandardMaterial color={['#e4cf9e', '#d9c08c', '#ead6a8', '#d5ba83'][i]} roughness={1} /></mesh>
-        {[-0.34, -0.15, 0.04, 0.23].map((y, j) => <mesh key={y} position={[0, y, 0.023]}><boxGeometry args={[0.46 - j * 0.055, 0.018, 0.008]} /><meshBasicMaterial color="#806544" transparent opacity={0.6} /></mesh>)}
+        {[-0.34, -0.15, 0.04, 0.23].map((y, j) => <mesh key={y} position={[0, y, 0.023]}><boxGeometry args={[0.46 - j * 0.055, 0.018, 0.008]} /><meshBasicMaterial color="#806544" transparent opacity={0.5} /></mesh>)}
         <mesh position={[0.23, 0.5, 0.035]}><circleGeometry args={[0.045, 8]} /><meshStandardMaterial color="#9d3f2a" metalness={0.18} roughness={0.6} /></mesh>
       </group>)}
       {[-2.25, 2.25].map((x) => <mesh key={x} castShadow position={[x, -2.05, 0.02]}><cylinderGeometry args={[0.075, 0.11, 2.4, 6]} /><meshStandardMaterial color="#53351f" /></mesh>)}
@@ -290,21 +293,66 @@ function WorldHeadline({ progress }) {
 }
 
 function LoadingCard() {
-  return <div className="loading"><div className="loading-sigil">✧</div><div className="loading-title">Opening the realm</div><div className="loading-track"><span /></div><div className="loading-sub">Please wait</div></div>
+  return <div className="loading"><div className="loading-sigil">✧</div><div className="loading-title">Opening the realm</div><div className="loading-track"><span /></div><div className="loading-sub">Gathering legends, lanterns and lore</div></div>
 }
 
 const notices = [
-  { id: 'about', stamp: 'THE CHRONICLER', title: 'Meet your DM', mark: '✦', body: 'I build adventures around meaningful choices, strange worlds, memorable characters, and the stories that emerge from them.' },
-  { id: 'campaigns', stamp: 'OPEN CONTRACTS', title: 'Campaigns', mark: '⚔', body: 'Cargo Status Lost — an otherworldly fantasy adventure full of secrets and dangerous bargains.' },
-  { id: 'lore', stamp: 'THE ARCHIVES', title: 'World archives', mark: '⌘', body: 'Explore setting notes, maps, factions, important NPCs, mysteries, and discoveries from the adventures.' },
-  { id: 'guild', stamp: 'JOIN THE GUILD', title: 'Find an adventure', mark: '➶', body: 'Add your StartPlaying listings, Discord invite, booking page, or contact links here.' },
+  { id: 'about', stamp: 'THE CHRONICLER', title: 'Meet your DM', mark: '✦', body: 'I build adventures around meaningful choices, strange worlds, memorable characters, and the stories that emerge at the table. This notice is where your introduction, DM style, and experience can live.' },
+  { id: 'campaigns', stamp: 'OPEN CONTRACTS', title: 'Campaigns', mark: '⚔', body: 'Cargo Status Lost — an otherworldly fantasy adventure full of secrets and dangerous bargains. Pokémon Grand Journey — a creature-training adventure across a region of towns, trials, and discoveries. Replace or expand these entries to match your current listings.' },
+  { id: 'lore', stamp: 'THE ARCHIVES', title: 'World archives', mark: '⌘', body: 'Explore setting notes, maps, factions, important NPCs, mysteries, and discoveries from the adventures. This section can grow into a proper campaign wiki.' },
+  { id: 'guild', stamp: 'JOIN THE GUILD', title: 'Find an adventure', mark: '➶', body: 'Add your StartPlaying listings, Discord invite, booking page, or contact links here. The prototype keeps these as editable content until you provide the final URLs.' },
 ]
 
 function App() {
   const [progress, setProgress] = useState(0)
   const [selected, setSelected] = useState(null)
   const [muted, setMuted] = useState(true)
+  const [view, setView] = useState('realm')
+  const [campaigns, setCampaigns] = useState(() => readDemoStorage(CAMPAIGNS_STORAGE_KEY, initialCampaigns))
+  const [applications, setApplications] = useState(() => readDemoStorage(APPLICATIONS_STORAGE_KEY, []))
   const lastProgress = useRef(0)
+
+  useEffect(() => saveDemoStorage(CAMPAIGNS_STORAGE_KEY, campaigns), [campaigns])
+  useEffect(() => saveDemoStorage(APPLICATIONS_STORAGE_KEY, applications), [applications])
+
+  const navigate = (nextView) => {
+    setSelected(null)
+    setView(nextView)
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
+
+  function submitApplication(application) {
+    setApplications((current) => [...current, {
+      ...application,
+      id: createId('application'),
+      status: 'pending',
+      createdAt: Date.now(),
+    }])
+  }
+
+  function updateApplication(applicationId, status) {
+    setApplications((current) => {
+      const target = current.find((application) => application.id === applicationId)
+      if (!target || target.status !== 'pending') return current
+      if (status === 'approved') {
+        const campaign = campaigns.find((item) => item.id === target.campaignId)
+        const approvedCount = current.filter((item) => item.campaignId === target.campaignId && item.status === 'approved').length
+        if (!campaign || approvedCount >= campaign.capacity) return current
+      }
+      return current.map((application) => application.id === applicationId ? { ...application, status } : application)
+    })
+  }
+
+  function saveCampaign(campaign) {
+    setCampaigns((current) => current.some((item) => item.id === campaign.id)
+      ? current.map((item) => item.id === campaign.id ? campaign : item)
+      : [...current, campaign])
+  }
+
+  function deleteCampaign(campaignId) {
+    setCampaigns((current) => current.filter((campaign) => campaign.id !== campaignId))
+    setApplications((current) => current.filter((application) => application.campaignId !== campaignId))
+  }
 
   useEffect(() => {
     const update = () => {
@@ -320,6 +368,7 @@ function App() {
   }, [])
 
   useEffect(() => {
+    if (view !== 'realm') return undefined
     const sections = gsap.utils.toArray('.story-section')
     sections.forEach((section) => {
       gsap.fromTo(section.querySelectorAll('.reveal'), { y: 24, opacity: 0 }, {
@@ -328,32 +377,40 @@ function App() {
       })
     })
     return () => ScrollTrigger.getAll().forEach((t) => t.kill())
-  }, [])
+  }, [view])
 
   const activeNotice = notices.find((notice) => notice.id === selected)
   const stage = progress < 0.24 ? 'THE GATE' : progress < 0.5 ? 'THE COURTYARD' : progress < 0.73 ? 'THE WILDLINGS' : 'THE NOTICE BOARD'
 
   return (
-    <div className="site-shell">
-      <div className="scene-fixed" aria-hidden="true">
+    <div className={`site-shell ${view === 'realm' ? 'realm-home-shell' : 'product-shell'}`}>
+      {view === 'realm' && <div className="scene-fixed" aria-hidden="true">
         <Canvas shadows dpr={[1, 1.7]} camera={{ position: [0, 3.4, 10.8], fov: 48 }} gl={{ antialias: true, alpha: false }}>
           <Suspense fallback={null}><World progress={progress} /></Suspense>
         </Canvas>
         <div className="vignette" />
         <div className="film-grain" />
-      </div>
+      </div>}
 
-      <header className="topbar">
-        <a className="brand" href="#top" aria-label="The Realm home"><span className="brand-mark">✧</span><span><b>THE REALM</b><small>A DUNGEON MASTER'S WORLD</small></span></a>
-        <div className="topbar-right"><span className="chapter-pill"><i /> {stage}</span><button className="sound-button" onClick={() => setMuted(!muted)} aria-label="Toggle ambient audio" title="Toggle ambient audio">🔊</button></div>
+      <header className={`topbar ${view !== 'realm' ? 'product-topbar' : ''}`}>
+        <button className="brand brand-button" onClick={() => navigate('realm')} aria-label="Return to The Realm home"><span className="brand-mark">✧</span><span><b>THE REALM</b><small>A DUNGEON MASTER'S WORLD</small></span></button>
+        <nav className="site-nav" aria-label="Main navigation">
+          <button className={view === 'campaigns' ? 'nav-link active' : 'nav-link'} onClick={() => navigate('campaigns')}>Campaigns</button>
+          <button className={view === 'dashboard' ? 'nav-link active' : 'nav-link'} onClick={() => navigate('dashboard')}>DM Console</button>
+        </nav>
+        <div className="topbar-right">
+          {view === 'realm' && <span className="chapter-pill"><i /> {stage}</span>}
+          {view === 'realm' && <button className="sound-button" onClick={() => setMuted(!muted)} aria-label="Toggle ambient audio" title="Audio placeholder">{muted ? 'SOUND OFF' : 'SOUND ON'}</button>}
+        </div>
       </header>
 
-      <main id="top">
+      {view === 'realm' ? <main id="top">
         <section className="story-section hero-section">
           <div className="hero-copy reveal">
             <div className="eyebrow"><span /> A WORLD OF STORIES, SHARED AT THE TABLE <span /></div>
             <h1>THE FANTASY<br /><em>WORLD AWAITS YOU</em></h1>
             <p>Beyond these gates are forgotten legends, unlikely companions, and adventures waiting to be written.</p>
+            <div className="hero-actions"><button className="button-primary" onClick={() => navigate('campaigns')}>Browse campaigns <span aria-hidden="true">↗</span></button><button className="hero-link" onClick={() => navigate('dashboard')}>DM? Manage your realm</button></div>
             <div className="scroll-callout"><span className="scroll-line" /><span>SCROLL TO ENTER</span><span className="down-mark">⌄</span></div>
           </div>
           <div className="corner-coordinate">EST. IN IMAGINATION <span>•</span> OPEN TO ADVENTURERS</div>
@@ -387,23 +444,26 @@ function App() {
           </div>
           <div className="notice-grid">
             {notices.map((notice, index) => <button className={`notice-card reveal notice-${index + 1}`} key={notice.id} onClick={() => setSelected(notice.id)}>
-              <span className="paper-stamp">{notice.stamp}</span><span className="paper-mark">{notice.mark}</span><b>{notice.title}</b><span className="paper-rule" /><span className="read-note">READ</span>
+              <span className="paper-stamp">{notice.stamp}</span><span className="paper-mark">{notice.mark}</span><b>{notice.title}</b><span className="paper-rule" /><span className="read-note">READ NOTICE <span>↗</span></span>
             </button>)}
           </div>
-          <footer className="site-footer"><span>MADE FOR ADVENTURERS & STORYTELLERS</span><span>THE REALM AWAITS · <a href="#top">RETURN TO THE GATE ↑</a></span></footer>
+          <div className="home-campaign-cta"><span><b>Looking for a table?</b><small>Browse current listings and request a seat.</small></span><button className="button-primary" onClick={() => navigate('campaigns')}>Open campaign registry ↗</button></div>
+          <footer className="site-footer"><span>MADE FOR ADVENTURERS & STORYTELLERS</span><span>THE REALM AWAITS · <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>RETURN TO THE GATE ↑</button></span></footer>
         </section>
-      </main>
+      </main> : view === 'campaigns' ? <CampaignDirectory campaigns={campaigns} applications={applications} onSubmitApplication={submitApplication} onNavigate={navigate} /> : <DmDashboard campaigns={campaigns} applications={applications} onNavigate={navigate} onSaveCampaign={saveCampaign} onDeleteCampaign={deleteCampaign} onUpdateApplication={updateApplication} />}
 
-      <div className="scroll-progress" aria-hidden="true"><span style={{ transform: `scaleX(${progress})` }} /></div>
-      <div className="side-index" aria-hidden="true"><span>01</span><i /><span>04</span></div>
-      {activeNotice && <div className="modal-backdrop" role="presentation" onClick={() => setSelected(null)}>
-        <article className="notice-modal" role="dialog" aria-modal="true" aria-labelledby="notice-title" onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close" onClick={() => setSelected(null)} aria-label="Close notice">✕</button>
-          <div className="eyebrow">{activeNotice.stamp}</div><div className="modal-sigil">{activeNotice.mark}</div>
-          <h2 id="notice-title">{activeNotice.title}</h2><p>{activeNotice.body}</p>
-          <div className="modal-bottom"><span>THE GUILD ARCHIVES</span><button onClick={() => setSelected(null)}>BACK TO THE BOARD ↗</button></div>
-        </article>
-      </div>}
+      {view === 'realm' && <>
+        <div className="scroll-progress" aria-hidden="true"><span style={{ transform: `scaleX(${progress})` }} /></div>
+        <div className="side-index" aria-hidden="true"><span>01</span><i /><span>04</span></div>
+        {activeNotice && <div className="modal-backdrop" role="presentation" onClick={() => setSelected(null)}>
+          <article className="notice-modal" role="dialog" aria-modal="true" aria-labelledby="notice-title" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSelected(null)} aria-label="Close notice">✕</button>
+            <div className="eyebrow">{activeNotice.stamp}</div><div className="modal-sigil">{activeNotice.mark}</div>
+            <h2 id="notice-title">{activeNotice.title}</h2><p>{activeNotice.body}</p>
+            <div className="modal-bottom"><span>THE GUILD ARCHIVES</span><button onClick={() => setSelected(null)}>BACK TO THE BOARD ↗</button></div>
+          </article>
+        </div>}
+      </>}
     </div>
   )
 }
